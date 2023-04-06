@@ -197,12 +197,14 @@ const minifyJS = () => {
     .pipe(browserSync.stream());
 };
 const checkPHP = () => {
-	return gulp
-	  .src("src/php/**/*.php")
-	//   .pipe(uglify())
-	  .pipe(gulp.dest("dist/php"))
-	  .pipe(browserSync.stream());
-  };
+  return (
+    gulp
+      .src("src/php/**/*.php")
+      //   .pipe(uglify())
+      .pipe(gulp.dest("./"))
+      .pipe(browserSync.stream())
+  );
+};
 const compileKit = () => {
   return gulp
     .src(["html/**/*.kit", "!html/**/_*.kit"])
@@ -293,7 +295,7 @@ async function backupProject() {
   const currentDir = path.dirname(currentPath);
   const projectName = path.basename(currentDir);
   const backupName = `${projectName}.zip`;
-  const outputDirectory = "E:/www";
+  const outputDirectory = "Z:/www";
   const projectDirectory = path.join(outputDirectory, projectName);
 
   // Sprawdź, czy istnieje folder projektu w katalogu docelowym
@@ -351,6 +353,13 @@ gulp.task("checkPHP", checkPHP);
 gulp.task("copyImages", copyImages);
 gulp.task(
   "watch",
-  gulp.series("compileKit", "minifyCSS", "minifyJS", "copyImages","checkPHP", watch)
+  gulp.series(
+    "compileKit",
+    "minifyCSS",
+    "minifyJS",
+    "copyImages",
+    "checkPHP",
+    watch
+  )
 );
 gulp.task("default", gulp.series("watch"));
