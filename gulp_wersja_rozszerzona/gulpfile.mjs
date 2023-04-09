@@ -7,16 +7,41 @@ import uglify from 'gulp-uglify';
 import fileInclude from 'gulp-file-include';
 import browserSyncPackage from 'browser-sync';
 import rename from 'gulp-rename';
-import { promisify } from 'util';
-import { exec as childExec } from 'child_process';
-import ncu from 'npm-check-updates';
-import zip from 'gulp-zip';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import tinypng from 'gulp-tinypng-compress';
+import imagemin from 'gulp-imagemin';
+import imageminMozjpeg from 'imagemin-mozjpeg';
+import imageminPngquant from 'imagemin-pngquant';
+import imageminSvgo from 'imagemin-svgo';
 
-const exec = promisify(childExec);
 const browserSync = browserSyncPackage.create();
 const sass = sassPackage(sassCompiler);
+
+const compressImages = () => {
+	return gulp
+		.src('src/img/**/*.{png,jpg,jpeg}')
+		.pipe(
+			tinypng({
+				key: 'tMnDBmcM1TWnVp4xLtGl6699tyBhXngQ',
+				sigFile: 'src/img/.tinypng-sigs',
+				log: true,
+			})
+		)
+		.pipe(gulp.dest('dist/img'))
+		.pipe(browserSync.stream());
+};
+
+async function optimizeImages() {
+	const files = await imagemin(['src/img/**/*.{jpg,jpeg,png,svg,gif}'], {
+		destination: 'dist/img',
+		plugins: [
+			imageminMozjpeg({ quality: 75 }),
+			imageminPngquant({ quality: [0.6, 0.8] }),
+			imageminSvgo(),
+		],
+	});
+
+	console.log('Obrazy zoptymalizowane');
+}
 
 function createFolders(done) {
 	const foldersToCreate = [
@@ -93,10 +118,7 @@ const createFiles = done => {
     <link rel="stylesheet" href="../dist/css/style.min.css">
 </head>
 <body>
- 
     <h1>Hello All !</h1>
-    <button id="menu-btn">Menu</button>
-    @@include('_nav.kit')
     @@include('_footer.kit')
     <script src="../dist/js/script.min.js"></script>
 </body>
@@ -107,72 +129,16 @@ const createFiles = done => {
 			content: '<footer></footer>',
 		},
 		{
-			path: 'html/_nav.kit',
-			content: `<nav class="nav-menu" id="nav-menu">
-  <button class="close-btn" id="close-btn">X</button>
-  <ul>
-    <li><a href="#o-nas">O nas</a></li>
-    <li><a href="#nasz-zespol">Nasz zespół</a></li>
-    <li><a href="#nasze-osiagniecia">Nasze osiągnięcia</a></li>
-    <li><a href="#kontakt">Kontakt</a></li>
-  </ul>
-</nav>`,
-		},
-		{
 			path: 'src/sass/style.scss',
 			content: `* {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-}
-nav {
-  position: fixed;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.8);
-  transition: left 0.3s ease-in-out;
-}
-
-nav.visible {
-  left: 0;
-}
-
-`,
+}`,
 		},
 		{
 			path: 'src/js/script.js',
-			content: `'use strict';
-
-document.addEventListener('DOMContentLoaded', () => {
-  const menuBtn = document.getElementById('menu-btn');
-  const closeBtn = document.getElementById('close-btn');
-  const nav = document.querySelector('nav');
-  const navLinks = document.querySelectorAll('nav a');
-
-  if (menuBtn && closeBtn && nav) {
-    menuBtn.addEventListener('click', () => {
-      nav.classList.add('visible');
-      nav.style.transform = 'translateY(0%)';
-    });
-
-    closeBtn.addEventListener('click', () => {
-      nav.classList.remove('visible');
-      nav.style.transform = 'translateY(-100%)';
-    });
-
-    // Dodanie event listenera do każdego elementu nawigacji
-    navLinks.forEach(link => {
-      link.addEventListener('click', () => {
-        nav.classList.remove('visible');
-        nav.style.transform = 'translateY(-100%)';
-      });
-    });
-  }
-});
-
-`,
+			content: "'use strict'",
 		},
 		{
 			path: 'src/php/index.php',
@@ -221,6 +187,25 @@ Aby utworzyć kopię zapasową folderów "dist", "html", "instrukcja", "src" ora
     />
     <meta name="robots" content="index, follow">
     <meta name="author" content="uroboros.online">
+
+## Kompresja obrazów za pomocą TinyPNG
+
+Funkcja "compressImages" pozwala na kompresję obrazów w formatach PNG, JPG i JPEG za pomocą usługi TinyPNG. Kompresja obrazów może znacznie zmniejszyć ich rozmiar, co przekłada się na szybsze wczytywanie strony.
+
+Aby skorzystać z funkcji "compressImages", należy wykonać następujące kroki:
+
+1. Upewnij się, że pakiet "gulp-tinypng-compress" jest zainstalowany w projekcie (jeśli nie, postępuj zgodnie z wcześniejszymi instrukcjami instalacji).
+
+2. Zamień "YOUR_API_KEY" na klucz API TinyPNG w funkcji "compressImages" w pliku "gulpfile.mjs". Klucz API można uzyskać, rejestrując się na stronie [TinyPNG Developer API](https://tinypng.com/developers).
+
+3. Uruchom zadanie Gulp, które kompresuje obrazy za pomocą TinyPNG. Otwórz terminal w katalogu głównym projektu i wpisz polecenie:
+
+gulp compressImages
+
+
+4. Skompresowane obrazy zostaną zapisane w folderze "dist/img".
+
+    
  
   `,
 		},
@@ -314,6 +299,12 @@ const watch = () => {
 
 // ---------------------------------------------------------------
 
+import { promisify } from 'util';
+import { exec as childExec } from 'child_process';
+import ncu from 'npm-check-updates';
+
+const exec = promisify(childExec);
+
 async function checkPackageUpdates() {
 	try {
 		const upgraded = await ncu.run({
@@ -339,11 +330,16 @@ async function checkPackageUpdates() {
 
 // ------------------------------------------------------------
 
+gulp.task('checkPackageUpdates', checkPackageUpdates);
+
 // --------------------------------------------------------------
 
 // PROJEKT BACKUP
 // --------------------------------------------------------------
 // --------------------------------------------------------------
+import zip from 'gulp-zip';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 async function backupProject() {
 	const currentPath = fileURLToPath(import.meta.url);
@@ -397,7 +393,9 @@ async function backupProject() {
 
 // --------------------------------------------------------------
 // --------------------------------------------------------------
-gulp.task('checkPackageUpdates', checkPackageUpdates);
+gulp.task('compressImages', compressImages);
+gulp.task('optimizeImages', optimizeImages);
+
 gulp.task('backup', backupProject);
 gulp.task('checkFoldersAndFiles', checkFoldersAndFiles);
 gulp.task('compileKit', gulp.series('checkFoldersAndFiles', compileKit));
@@ -413,8 +411,8 @@ gulp.task(
 		'minifyJS',
 		'copyImages',
 		'checkPHP',
+		'optimizeImages',
 		watch
 	)
 );
-
 gulp.task('default', gulp.series('watch'));
