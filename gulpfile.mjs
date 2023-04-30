@@ -118,6 +118,8 @@ const createFiles = done => {
     <link rel="stylesheet" href="../dist/css/style.min.css">
 </head>
 <body>
+<header></header>
+<nav></nav>
     <h1>Hello All !</h1>
     @@include('_footer.kit')
     <script src="../dist/js/script.min.js"></script>
