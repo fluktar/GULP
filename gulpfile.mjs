@@ -1,8 +1,9 @@
 import gulp from 'gulp';
 import fs from 'fs';
 import cleanCSS from 'gulp-clean-css';
-import sassPackage from 'gulp-sass';
-import sassCompiler from 'sass';
+// import sassPackage from 'gulp-sass';
+// import sassCompiler from 'sass';
+import sass from 'gulp-dart-sass';
 import uglify from 'gulp-uglify';
 import fileInclude from 'gulp-file-include';
 import browserSyncPackage from 'browser-sync';
@@ -14,7 +15,7 @@ import imageminPngquant from 'imagemin-pngquant';
 import imageminSvgo from 'imagemin-svgo';
 
 const browserSync = browserSyncPackage.create();
-const sass = sassPackage(sassCompiler);
+// const sass = sassPackage(sassCompiler);
 
 const compressImages = () => {
 	return gulp
@@ -118,8 +119,6 @@ const createFiles = done => {
     <link rel="stylesheet" href="../dist/css/style.min.css">
 </head>
 <body>
-<header></header>
-<nav></nav>
     <h1>Hello All !</h1>
     @@include('_footer.kit')
     <script src="../dist/js/script.min.js"></script>
