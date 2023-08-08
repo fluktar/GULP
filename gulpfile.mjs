@@ -143,7 +143,14 @@ const createFiles = (done) => {
     },
     {
       path: "src/php/index.php",
-      content: "<?php     ",
+      content: `<?php
+      function redirectToIndex() {
+          header('Location: index.html');
+          exit();
+      }
+      redirectToIndex();
+      
+      ?>`,
     },
     {
       path: "instrukcja/instrukcja.md",
