@@ -240,8 +240,7 @@ backupProject - funkcja tworzy kopię zapasową projektu, zapisując ją jako pl
     },
     {
       path: ".gitignore", // Dodanie pliku .gitignore w katalogu głównym
-      content: `# Ignorowane pliki i foldery
-	node_modules
+      content: `node_modules
 	src
 	html
 	gulpfile.mjs
