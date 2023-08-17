@@ -226,7 +226,7 @@ Aby uruchomić serwer, otwórz terminal w głównym katalogu projektu i wpisz:
 
 node server.js
 
-Po uruchomieniu, serwer będzie dostępny pod adresem http://localhost:3000/.
+Po uruchomieniu, serwer będzie dostępny pod adresem http://localhost:3005/.
 
 compressImages - funkcja kompresuje obrazy w formatach PNG, JPG i JPEG za pomocą usługi TinyPNG. Skompresowane obrazy zostają zapisane w folderze "dist/img".
 
@@ -469,7 +469,7 @@ function handleRequest(request, response) {
   response.end("<h1>Hello World</h1>");
 }
 const server = http.createServer(handleRequest);
-server.listen(3000);`;
+server.listen(3005);`;
 
   fs.writeFileSync("server.js", content, "utf8");
   console.log("Plik server.js został utworzony.");
