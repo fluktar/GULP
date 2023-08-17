@@ -57,15 +57,16 @@ function createFolders(done) {
     "src/sass",
     "instrukcja", // Dodanie folderu instrukcja
   ];
-
-  foldersToCreate.forEach((folder) => {
-    if (!fs.existsSync(folder)) {
-      fs.mkdirSync(folder, { recursive: true });
-      console.log(`Folder "${folder}" został utworzony.`);
-    } else {
-      console.log(`Folder "${folder}" już istnieje.`);
-    }
-  });
+  "instrukcja", // Dodanie folderu instrukcja
+    "server.js", // Dodanie nowego pliku server.js, który służy jako prosty serwer HTTP
+    foldersToCreate.forEach((folder) => {
+      if (!fs.existsSync(folder)) {
+        fs.mkdirSync(folder, { recursive: true });
+        console.log(`Folder "${folder}" został utworzony.`);
+      } else {
+        console.log(`Folder "${folder}" już istnieje.`);
+      }
+    });
 
   done();
 }
@@ -216,6 +217,16 @@ gulp compressImages
 Skompresowane obrazy zostaną zapisane w folderze "dist/img".
 
 ## Wyjaśnienie funkcji
+
+createServerFile() - Funkcja createServerFile tworzy plik server.js, który służy jako prosty serwer HTTP. Dzięki temu można szybko uruchomić lokalny serwer, aby sprawdzić działanie aplikacji lub strony internetowej w środowisku deweloperskim.
+  
+Plik server.js jest tworzony w głównym katalogu projektu (tam, gdzie znajduje się plik gulpfile.mjs).
+ 
+Aby uruchomić serwer, otwórz terminal w głównym katalogu projektu i wpisz:
+
+node server.js
+
+Po uruchomieniu, serwer będzie dostępny pod adresem http://localhost:3000/.
 
 compressImages - funkcja kompresuje obrazy w formatach PNG, JPG i JPEG za pomocą usługi TinyPNG. Skompresowane obrazy zostają zapisane w folderze "dist/img".
 
@@ -450,4 +461,20 @@ gulp.task(
     watch
   )
 );
-gulp.task("default", gulp.series("watch"));
+
+function createServerFile(done) {
+  const content = `const http = require("http");
+function handleRequest(request, response) {
+  response.statusCode = 200;
+  response.end("<h1>Hello World</h1>");
+}
+const server = http.createServer(handleRequest);
+server.listen(3000);`;
+
+  fs.writeFileSync("server.js", content, "utf8");
+  console.log("Plik server.js został utworzony.");
+  done();
+}
+
+gulp.task("createServerFile", createServerFile);
+gulp.task("default", gulp.series("createServerFile", "watch"));
