@@ -463,13 +463,24 @@ gulp.task(
 );
 
 function createServerFile(done) {
-  const content = `const http = require("http");
-function handleRequest(request, response) {
-  response.statusCode = 200;
-  response.end("<h1>Hello World</h1>");
-}
-const server = http.createServer(handleRequest);
-server.listen(3005);`;
+  if (fs.existsSync("server.js")) {
+    console.log("Plik server.js już istnieje. Nie nadpisuję.");
+    done();
+    return;
+  }
+
+  const content = `const express = require("express");
+const app = express();
+
+app.get('/currenttime', function (req, res) {
+  res.send("<h1>Hello World</h1><div></div><a href='http://localhost:3000/'>Click here</a>");
+});
+
+app.get("/", function (req, res) {
+  res.send("<h1>Hello World</h1><div></div><a href='http://localhost:3000/'>Click here</a>");
+});
+
+app.listen(3005);`;
 
   fs.writeFileSync("server.js", content, "utf8");
   console.log("Plik server.js został utworzony.");
