@@ -448,51 +448,6 @@ gulp.task("compileKit", gulp.series("checkFoldersAndFiles", compileKit));
 gulp.task("minifyCSS", minifyCSS);
 gulp.task("minifyJS", minifyJS);
 gulp.task("checkPHP", checkPHP);
-
-gulp.task("copyImages", copyImages);
-gulp.task(
-  "watch",
-  gulp.series(
-    "compileKit",
-    "minifyCSS",
-    "minifyJS",
-    "copyImages",
-    "checkPHP",
-    "optimizeImages",
-    watch
-  )
-);
-
-function createServerFile(done) {
-  if (fs.existsSync("server.js")) {
-    console.log("Plik server.js już istnieje. Nie nadpisuję.");
-    done();
-    return;
-  }
-
-  const content = `const express = require("express");
-const app = express();
-
-app.get('/currenttime', function (req, res) {
-  res.send("<h1>Hello World</h1><div></div><a href='http://localhost:3000/'>Click here</a>");
-});
-
-app.get("/", function (req, res) {
-  res.send("<h1>Hello World</h1><div></div><a href='http://localhost:3000/'>Click here</a>");
-});
-
-app.listen(3005);`;
-
-  fs.writeFileSync("server.js", content, "utf8");
-  console.log("Plik server.js został utworzony.");
-  done();
-}
-
-gulp.task("createServerFile", createServerFile);
-gulp.task("default", gulp.series("createServerFile", "watch"));
-
-import nodemon from "nodemon";
-
 // zadanie do uruchamiania serwera za pomocą nodemon
 gulp.task("start-server", function (done) {
   nodemon({
@@ -513,6 +468,50 @@ gulp.task("watch", function () {
     gulp.series("start-server")();
   });
 });
+gulp.task("copyImages", copyImages);
+gulp.task(
+  "watch",
+  gulp.series(
+    "compileKit",
+    "minifyCSS",
+    "minifyJS",
+    "copyImages",
+    "checkPHP",
+    "optimizeImages",
+    "start-server",
+    "watch",
+    watch
+  )
+);
 
-// zadanie domyślne do uruchamiania obu zadań
-gulp.task("default", gulp.series("start-server", "watch"));
+function createServerFile(done) {
+  if (fs.existsSync("server.js")) {
+    console.log("Plik server.js już istnieje. Nie nadpisuję.");
+    done();
+    return;
+  }
+
+  const content = `const fs = require("fs");
+  const path = require("path");
+  const express = require("express");
+  const app = express();
+
+app.get('/currenttime', function (req, res) {
+  res.send("<h1>Hello World</h1><div></div><a href='http://localhost:3000/'>Click here</a>");
+});
+
+app.get("/", function (req, res) {
+  res.send("<h1>Hello World</h1><div></div><a href='http://localhost:3000/'>Click here</a>");
+});
+
+app.listen(3005);`;
+
+  fs.writeFileSync("server.js", content, "utf8");
+  console.log("Plik server.js został utworzony.");
+  done();
+}
+
+gulp.task("createServerFile", createServerFile);
+gulp.task("default", gulp.series("createServerFile", "watch"));
+
+import nodemon from "nodemon";
