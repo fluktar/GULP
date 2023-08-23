@@ -495,14 +495,14 @@ function createServerFile(done) {
   const path = require("path");
   const express = require("express");
   const app = express();
+  app.use(express.static("dist"));
 
-app.get('/currenttime', function (req, res) {
-  res.send("<h1>Hello World</h1><div></div><a href='http://localhost:3000/'>Click here</a>");
-});
+  app.get("/", (req, res) => {
+    const index = path.join(__dirname, "index.html");
+    res.sendFile(index);
+  });
 
-app.get("/", function (req, res) {
-  res.send("<h1>Hello World</h1><div></div><a href='http://localhost:3000/'>Click here</a>");
-});
+
 
 app.listen(3005);`;
 
