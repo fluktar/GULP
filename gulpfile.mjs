@@ -50,6 +50,7 @@ function createFolders(done) {
     "dist/css",
     "dist/js",
     "html",
+    "views", // Added views folder
     "src",
     "src/img",
     "src/js",
@@ -83,6 +84,7 @@ const checkFoldersExist = () => {
     const folders = [
       "dist",
       "html",
+      "views", // Added views folder
       "src",
       "src/img",
       "src/js",
@@ -336,6 +338,7 @@ const watch = () => {
   });
 
   gulp.watch("html/**/*.kit", compileKit);
+  gulp.watch("html/**/*.kit", compileEjs);
   gulp.watch("src/sass/**/*.scss", minifyCSS);
   gulp.watch("src/js/**/*.js", minifyJS);
   gulp.watch("src/php/**/*.php", checkPHP);
@@ -447,6 +450,8 @@ gulp.task("checkFoldersAndFiles", checkFoldersAndFiles);
 gulp.task("compileKit", gulp.series("checkFoldersAndFiles", compileKit));
 gulp.task("minifyCSS", minifyCSS);
 gulp.task("minifyJS", minifyJS);
+// gulp.task("compileEjs", compileEjs);
+gulp.task("compileEjs", gulp.series("checkFoldersAndFiles", compileEjs));
 gulp.task("checkPHP", checkPHP);
 // zadanie do uruchamiania serwera za pomocą nodemon
 gulp.task("start-server", function (done) {
@@ -462,7 +467,21 @@ gulp.task("start-server", function (done) {
     .once("start", done);
 });
 
-// zadanie do monitorowania zmian w plikach
+function compileEjs() {
+  return gulp
+    .src(["html/**/*.kit", "!html/**/_*.kit"])
+    .pipe(
+      fileInclude({
+        prefix: "@@",
+        basepath: "@file",
+      })
+    )
+    .pipe(rename({ extname: ".ejs" })) // Change the extension to .ejs
+    .pipe(gulp.dest("views")) // Copy to views folder in the root directory
+
+    .pipe(browserSync.stream());
+}
+
 gulp.task("watch", function () {
   watch("server.js", function () {
     gulp.series("start-server")();
@@ -473,6 +492,7 @@ gulp.task(
   "watch",
   gulp.series(
     "compileKit",
+    "compileEjs",
     "minifyCSS",
     "minifyJS",
     "copyImages",
