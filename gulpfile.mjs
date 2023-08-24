@@ -464,6 +464,7 @@ gulp.task("start-server", function (done) {
     .on("restart", function () {
       console.log("Server restarted!");
     })
+
     .once("start", done);
 });
 
@@ -478,7 +479,6 @@ function compileEjs() {
     )
     .pipe(rename({ extname: ".ejs" })) // Change the extension to .ejs
     .pipe(gulp.dest("views")) // Copy to views folder in the root directory
-
     .pipe(browserSync.stream());
 }
 
@@ -515,8 +515,15 @@ function createServerFile(done) {
   const path = require("path");
   const express = require("express");
   const app = express();
-  app.use(express.static("dist"));
+ 
+  app.set("views", path.join(__dirname, "views"));
 
+  app.set("view engine", "ejs");
+  app.use(express.static("dist"));
+  
+  app.use(express.urlencoded({ extended: false }));
+
+  
   app.get("/", (req, res) => {
     const index = path.join(__dirname, "index.html");
     res.sendFile(index);
