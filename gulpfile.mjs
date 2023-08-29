@@ -140,7 +140,7 @@ const createFiles = done => {
   box-sizing: border-box;
   }
   @media screen and (min-width: 768px) {} // telefon
-  @media screen and (min-width: 767px) and (max-width: 1023px) {} // tablet
+  @media screen and (min-width: 769px) and (max-width: 1023px) {} // tablet
   @media screen and (min-width: 1024px) {} // desktop`,
 		},
 		{
