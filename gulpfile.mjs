@@ -47,6 +47,8 @@ async function optimizeImages() {
 function createFolders(done) {
 	const foldersToCreate = [
 		'dist',
+		'data',
+		'routes',
 		'dist/css',
 		'dist/js',
 		'html',
@@ -83,6 +85,8 @@ const checkFoldersExist = () => {
 	return new Promise((resolve, reject) => {
 		const folders = [
 			'dist',
+			'data',
+			'routes',
 			'html',
 			'views', // Added views folder
 			'src',
@@ -127,6 +131,29 @@ const createFiles = done => {
     <script src="/dist/js/script.min.js"></script>
 </body>
 </html>`,
+		},
+		{
+			path:'routes/link.js',
+			content: `const express = require("express");
+			const router = express.Router();
+			router.get("/", (req, res, next) => {
+			  res.redirect("index");
+			});
+			router.get("/posts-list", (req, res, next) => {
+			  res.render("posts-list");
+			});
+			module.exports = router;`
+		},
+		{
+			path:'data/database.js',
+			content: `const mysql = require("mysql");
+			const pool = mysql.createPool({
+			  host: "localhost",
+			  databasea: "blog",
+			  user: "root",
+			  password: "Sojokotojo1@3",
+			});
+			module.exports = pool;`
 		},
 		{
 			path: 'html/_footer.kit',
