@@ -146,14 +146,39 @@ const createFiles = (done) => {
     },
     {
       path: "data/database.js",
-      content: `const mysql = require("mysql");
+      content: `
+      // decyduj który potrzebujesz sql czy mongo
+      //tutaj jest sql
+      const mysql = require("mysql2/promise");
 			const pool = mysql.createPool({
 			  host: "localhost",
 			  databasea: "blog",
 			  user: "root",
 			  password: "Sojokotojo1@3",
 			});
-			module.exports = pool;`,
+			module.exports = pool;
+// ---------------------------------------------------------------
+//tutaj jest mongodb
+// const mongodb = require("mongodb");
+// const MongoClient = mongodb.MongoClient;
+// let database;
+// async function connect() {
+//   const client = await MongoClient.connect("mongodb://localhost:27017");
+//   database = client.db("blog");
+// }
+
+// function getDb() {
+//   if (!database) {
+//     throw new Error("Database not initialized");
+//   }
+//   return database;
+// }
+// module.exports = {
+//   connectToDatabase: connect,
+//   getDb: getDb,
+// };
+
+`,
     },
     {
       path: "html/_footer.kit",
@@ -374,6 +399,7 @@ const watch = () => {
   gulp.watch("src/php/**/*.php", checkPHP);
   gulp.watch("src/img/**/*", copyImages);
   gulp.watch("./*.html").on("change", browserSync.reload);
+  gulp.watch("src/sass/**/*.scss").on("change", browserSync.reload);
 };
 
 // ---------------------------------------------------------------
@@ -488,7 +514,12 @@ gulp.task("start-server", function (done) {
   nodemon({
     script: "server.js",
     ext: "js",
-    watch: ["server.js", "routes/**/*.js"],
+    watch: [
+      "server.js",
+      "routes/**/*.js",
+      "html/**/*.kit",
+      "src/sass/**/*.scss",
+    ],
     env: { NODE_ENV: "development" },
   })
     .on("restart", function () {
