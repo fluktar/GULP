@@ -572,27 +572,35 @@ function createServerFile(done) {
     return;
   }
 
-  const content = `const fs = require("fs");
-  const path = require("path");
-  const express = require("express");
+  const content = `const path = require('path');
+
+  const express = require('express');
+  
+  const blogRoutes = require('./routes/link');
+  const db = require('./data/database');
+  
   const app = express();
- 
-  app.set("views", path.join(__dirname, "views"));
-
-  app.set("view engine", "ejs");
-  app.use(express.static("dist"));
   
-  app.use(express.urlencoded({ extended: false }));
-
+  // Activate EJS view engine
+  app.set('view engine', 'ejs');
+  app.set('views', path.join(__dirname, 'views'));
   
-  app.get("/", (req, res) => {
-    const index = path.join(__dirname, "index.html");
-    res.sendFile(index);
+  app.use(express.urlencoded({ extended: true })); // Parse incoming request bodies
+  app.use('/dist',express.static('dist')); // Serve static files (e.g. CSS files)
+  
+  app.use(blogRoutes);
+  
+  app.use(function (error, req, res, next) {
+    // Default error handling function
+    // Will become active whenever any route / middleware crashes
+    console.log(error);
+    res.status(500).render('500');
   });
-
-
-
-app.listen(3005);`;
+  
+  db.connectToDatabase().then(function () {
+    app.listen(3005);
+  });
+  `;
 
   fs.writeFileSync("server.js", content, "utf8");
   console.log("Plik server.js został utworzony.");
