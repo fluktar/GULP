@@ -35,7 +35,7 @@ const createFiles = (done) => {
     {
       path: "data/database.js",
       content: `
-      // decyduj który potrzebujesz sql czy mongo
+      // decyduj który potrzebujesz sql czy mongo, pamiętaj, że trzeba uruchomić bazę danych przed przystąpieniem do programowania, chyba, że mongo to nie trzeba - ponieważ jest w chmurze ale może być i lokalnie.
       //tutaj jest sql
       const mysql = require("mysql2/promise");
 			const pool = mysql.createPool({
