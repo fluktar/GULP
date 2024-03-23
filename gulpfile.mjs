@@ -324,7 +324,10 @@ function compileEjs() {
     )
     .pipe(rename({ extname: ".ejs" })) // Change the extension to .ejs
     .pipe(gulp.dest("views")) // Copy to views folder in the root directory
-    .pipe(browserSync.stream());
+    .pipe(browserSync.stream())
+    .on("end", function () {
+      browserSync.reload();
+    });
 }
 
 gulp.task("watch", function () {
