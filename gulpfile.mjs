@@ -308,6 +308,7 @@ gulp.task("start-server", function (done) {
   })
     .on("restart", function () {
       console.log("Server restarted!");
+      browserSync.reload();
     })
     .once("start", done);
 });
