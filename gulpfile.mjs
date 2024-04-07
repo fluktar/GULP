@@ -59,6 +59,10 @@ function createFolders(done) {
     "src/js",
     "src/php",
     "src/sass",
+    "src/sass/abstracts",
+    "src/sass/base",
+    "src/sass/components",
+    "src/sass/layout",
     "instrukcja", // Dodanie folderu instrukcja
   ];
   "instrukcja", // Dodanie folderu instrukcja

@@ -73,15 +73,114 @@ const createFiles = (done) => {
       content: "<footer></footer>",
     },
     {
-      path: "src/sass/style.scss",
-      content: `* {
+      path: "src/sass/abstracts/_mixins.scss",
+      content: `
+      @mixin center {
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        position: absolute;
+      }
+      //MEDIA QUERY MIXINS
+      /*
+      0-600px - Phone
+      600-900px - Tablet portrait
+      900-1200px - Tablet landscape
+      1200-1800px - Desktop
+      1800px + - Big desktop
+      
+      $breakpoint: 
+      phone, 
+      tab-port, 
+      tab-land, 
+      big-desktop
+      1em = 16px
+      */
+      
+      @mixin respond($breakpoint) {
+        @if $breakpoint == phone {
+          @media (max-width: 37.5em) {
+            @content;
+          }
+        }
+        @if $breakpoint == tab-port {
+          @media (max-width: 56.25em) {
+            @content;
+          }
+        }
+        @if $breakpoint == tab-land {
+          @media (max-width: 75em) {
+            @content;
+          }
+        }
+        @if $breakpoint == big-desktop {
+          @media (min-width: 112.5em) {
+            @content;
+          }
+        }
+      }
+      `,
+    },
+    {
+      path: "src/sass/base/_base.scss",
+      content: `
+      *,
+*::before,
+*::after {
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
+  box-sizing: inherit;
+}
+html {
+  font-size: 62.5%;
+
+  @include respond(tab-land) {
+    font-size: 56.25%;
   }
-  @media screen and (max-width: 768px) {} // telefon
-  @media screen and (min-width: 769px) and (max-width: 1023px) {} // tablet
-  @media screen and (min-width: 1024px) {} // desktop`,
+  @include respond(tab-port) {
+    font-size: 50%;
+  }
+  @include respond(phone) {
+    font-size: 37.5%;
+  }
+  @include respond(big-desktop) {
+    font-size: 80%;
+  }
+}
+body {
+  box-sizing: border-box;
+}
+
+      `,
+    },
+    {
+      path: "src/sass/base/_utilities.scss",
+      content: `
+      .u-center-text {
+        text-align: center !important;
+      }
+      .u-margin-bottom-big {
+        margin-bottom: 8rem !important;
+      }
+      .u-margin-bottom-small {
+        margin-bottom: 1.5rem !important;
+      }
+      .u-margin-bottom-medium {
+        margin-bottom: 4rem !important;
+      }
+      .u-margin-top-big {
+        margin-top: 8rem !important;
+      }
+      `,
+    },
+    {
+      path: "src/sass/style.scss",
+      content: `
+      @import "abstracts/mixins";
+      @import "base/base";
+      @import "base/utilities";
+      
+      `,
     },
     {
       path: "src/js/script.js",
