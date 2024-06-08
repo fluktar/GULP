@@ -25,11 +25,9 @@ const createFiles = (done) => {
       content: `const express = require("express");
 			const router = express.Router();
 			router.get("/", (req, res, next) => {
-			  res.redirect("index");
+			  res.render("index");
 			});
-			router.get("/posts-list", (req, res, next) => {
-			  res.render("posts-list");
-			});
+		
 			module.exports = router;`,
     },
     {
