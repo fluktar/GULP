@@ -95,28 +95,42 @@ const createFiles = (done) => {
       1em = 16px
       */
       
-      @mixin respond($breakpoint) {
-        @if $breakpoint == phone {
-          @media only screen and (max-width: 37.5em) {
-            @content;
-          }
-        }
-        @if $breakpoint == tab-port {
-          @media only screen and (max-width: 56.25em) {
-            @content;
-          }
-        }
-        @if $breakpoint == tab-land {
-          @media only screen and (max-width: 75em) {
-            @content;
-          }
-        }
-        @if $breakpoint == big-desktop {
-          @media only screen and (min-width: 112.5em) {
-            @content;
-          }
-        }
-      }
+      // Mixin do obsługi responsywności, który stosuje style dla określonych breakpointów.
+@mixin respond($breakpoint) {
+  
+  // Warunek dla breakpointu "phone"
+  @if $breakpoint == "phone" {
+    // Zastosuj style, gdy szerokość ekranu jest większa lub równa 37.5em (600px)
+    @media only screen and (min-width: 37.5em) {
+      @content;
+    }
+  }
+
+  // Warunek dla breakpointu "tab-port"
+  @if $breakpoint == "tab-port" {
+    // Zastosuj style, gdy szerokość ekranu jest większa lub równa 56.25em (900px)
+    @media only screen and (min-width: 56.25em) {
+      @content;
+    }
+  }
+
+  // Warunek dla breakpointu "tab-land"
+  @if $breakpoint == "tab-land" {
+    // Zastosuj style, gdy szerokość ekranu jest większa lub równa 75em (1200px)
+    @media only screen and (min-width: 75em) {
+      @content;
+    }
+  }
+
+  // Warunek dla breakpointu "big-desktop"
+  @if $breakpoint == "big-desktop" {
+    // Zastosuj style, gdy szerokość ekranu jest większa lub równa 112.5em (1800px)
+    @media only screen and (min-width: 112.5em) {
+      @content;
+    }
+  }
+}
+
       `,
     },
     {
