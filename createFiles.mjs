@@ -144,19 +144,31 @@ const createFiles = (done) => {
   box-sizing: inherit;
 }
 html {
+  // Ustawienie bazowego rozmiaru czcionki na 62.5% (10px przy standardowym 16px, co odpowiada 1rem = 10px)
   font-size: 62.5%;
 
-  @include respond(tab-land) {
-    font-size: 56.25%;
+  // Użycie mixinu "respond" dla breakpointu "phone"
+  @include respond("phone") {
+    // Zwiększenie rozmiaru czcionki do 75% (12px przy standardowym 16px, co odpowiada 1rem = 12px)
+    font-size: 75%;
   }
-  @include respond(tab-port) {
-    font-size: 50%;
+
+  // Użycie mixinu "respond" dla breakpointu "tab-port"
+  @include respond("tab-port") {
+    // Zwiększenie rozmiaru czcionki do 100% (16px przy standardowym 16px, co odpowiada 1rem = 16px)
+    font-size: 100%;
   }
-  @include respond(phone) {
-    font-size: 37.5%;
+
+  // Użycie mixinu "respond" dla breakpointu "tab-land"
+  @include respond("tab-land") {
+    // Zwiększenie rozmiaru czcionki do 125% (20px przy standardowym 16px, co odpowiada 1rem = 20px)
+    font-size: 125%;
   }
-  @include respond(big-desktop) {
-    font-size: 80%;
+
+  // Użycie mixinu "respond" dla breakpointu "big-desktop"
+  @include respond("big-desktop") {
+    // Zwiększenie rozmiaru czcionki do 150% (24px przy standardowym 16px, co odpowiada 1rem = 24px)
+    font-size: 150%;
   }
 }
 body {
