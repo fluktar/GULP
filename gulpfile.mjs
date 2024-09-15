@@ -1,39 +1,113 @@
+// gulpfile.mjs
 import gulp from "gulp";
+import browserSyncModule from "browser-sync";
+import nodemon from "gulp-nodemon";
 import fs from "fs";
 import cleanCSS from "gulp-clean-css";
-// import sassPackage from 'gulp-sass';
-// import sassCompiler from 'sass';
 import sass from "gulp-dart-sass";
 import uglify from "gulp-uglify";
 import fileInclude from "gulp-file-include";
-import browserSyncPackage from "browser-sync";
 import rename from "gulp-rename";
 import tinypng from "gulp-tinypng-compress";
 import imagemin from "gulp-imagemin";
 import imageminMozjpeg from "imagemin-mozjpeg";
 import imageminPngquant from "imagemin-pngquant";
 import imageminSvgo from "imagemin-svgo";
+import { createFiles } from "./createFiles.mjs";
+import dotenv from "dotenv";
+import inquirer from "inquirer";
+import phpConnect from "gulp-connect-php";
 
-const browserSync = browserSyncPackage.create();
-const browserSyncServer = browserSyncPackage.create();
-// const sass = sassPackage(sassCompiler);
+dotenv.config();
 
+const browserSync = browserSyncModule.create();
+
+export let projectType;
+
+// Funkcja wykrywająca typ projektu
+function detectProjectType(done) {
+  if (fs.existsSync("server.js")) {
+    projectType = "node";
+    console.log("Wykryto projekt Node.js");
+  } else if (fs.existsSync("index.php") || fs.existsSync("src/php")) {
+    projectType = "php";
+    console.log("Wykryto projekt PHP");
+  } else {
+    console.log("Nie udało się wykryć typu projektu.");
+  }
+  done();
+}
+
+// Funkcja pytająca o typ projektu
+async function askProjectType() {
+  const answers = await inquirer.prompt([
+    {
+      type: "list",
+      name: "projectType",
+      message: "Wybierz rodzaj projektu:",
+      choices: ["php", "node", "html"],
+      default: "html",
+    },
+  ]);
+  projectType = answers.projectType;
+  console.log(`Wybrano projekt: ${projectType}`);
+}
+
+// Funkcja tworząca foldery
+function createFolders(done) {
+  const foldersToCreate = [
+    "dist",
+    "dist/css",
+    "dist/js",
+    "html",
+    "src",
+    "src/img",
+    "src/js",
+    "src/sass",
+    "src/sass/abstracts",
+    "src/sass/base",
+    "src/sass/components",
+    "src/sass/layout",
+    "instrukcja",
+  ];
+
+  if (projectType === "php") {
+    foldersToCreate.push("src/php");
+  }
+
+  if (projectType === "node") {
+    foldersToCreate.push("views", "routes", "data");
+  }
+
+  foldersToCreate.forEach((folder) => {
+    if (!fs.existsSync(folder)) {
+      fs.mkdirSync(folder, { recursive: true });
+      console.log(`Folder "${folder}" został utworzony.`);
+    } else {
+      console.log(`Folder "${folder}" już istnieje.`);
+    }
+  });
+
+  done();
+}
+
+// Funkcja kompresująca obrazy za pomocą TinyPNG
 const compressImages = () => {
   return gulp
     .src("src/img/**/*.{png,jpg,jpeg}")
     .pipe(
       tinypng({
-        key: "tMnDBmcM1TWnVp4xLtGl6699tyBhXngQ",
+        key: process.env.TINYPNG_API_KEY,
         sigFile: "src/img/.tinypng-sigs",
         log: true,
       })
     )
-    .pipe(gulp.dest("dist/img"))
-    .pipe(browserSync.stream());
+    .pipe(gulp.dest("dist/img"));
 };
 
+// Funkcja optymalizująca obrazy
 async function optimizeImages() {
-  const files = await imagemin(["src/img/**/*.{jpg,jpeg,png,svg,gif}"], {
+  await imagemin(["src/img/**/*.{jpg,jpeg,png,svg,gif}"], {
     destination: "dist/img",
     plugins: [
       imageminMozjpeg({ quality: 75 }),
@@ -45,104 +119,39 @@ async function optimizeImages() {
   console.log("Obrazy zoptymalizowane");
 }
 
-function createFolders(done) {
-  const foldersToCreate = [
-    "dist",
-    "data",
-    "routes",
-    "dist/css",
-    "dist/js",
-    "html",
-    "views", // Added views folder
-    "src",
-    "src/img",
-    "src/js",
-    "src/php",
-    "src/sass",
-    "src/sass/abstracts",
-    "src/sass/base",
-    "src/sass/components",
-    "src/sass/layout",
-    "instrukcja", // Dodanie folderu instrukcja
-  ];
-  "instrukcja", // Dodanie folderu instrukcja
-    "server.js", // Dodanie nowego pliku server.js, który służy jako prosty serwer HTTP
-    foldersToCreate.forEach((folder) => {
-      if (!fs.existsSync(folder)) {
-        fs.mkdirSync(folder, { recursive: true });
-        console.log(`Folder "${folder}" został utworzony.`);
-      } else {
-        console.log(`Folder "${folder}" już istnieje.`);
-      }
-    });
-
-  done();
-}
-
+// Funkcja kopiująca obrazy
 const copyImages = () => {
-  return gulp
-    .src("src/img/**/*")
-    .pipe(gulp.dest("dist/img"))
-    .pipe(browserSync.stream());
+  return gulp.src("src/img/**/*").pipe(gulp.dest("dist/img"));
 };
 
-const checkFoldersExist = () => {
-  return new Promise((resolve, reject) => {
-    const folders = [
-      "dist",
-      "data",
-      "routes",
-      "html",
-      "views", // Added views folder
-      "src",
-      "src/img",
-      "src/js",
-      "src/sass",
-      "src/php",
-    ];
-
-    let allFoldersExist = true;
-    for (const folder of folders) {
-      if (!fs.existsSync(folder)) {
-        allFoldersExist = false;
-        break;
-      }
-    }
-
-    if (allFoldersExist) {
-      resolve();
-    } else {
-      reject();
-    }
-  });
-};
-
-import { createFiles } from "./createFiles.mjs";
-
-const checkFoldersAndFiles = (done) => {
-  createFolders(done);
-  createFiles(done);
-  done();
-};
-
+// Funkcja minifikująca JavaScript
 const minifyJS = () => {
   return gulp
     .src("src/js/**/*.js")
     .pipe(uglify())
     .pipe(rename({ suffix: ".min" }))
-    .pipe(gulp.dest("dist/js"))
-    .pipe(browserSync.stream());
+    .pipe(gulp.dest("dist/js"));
 };
-const checkPHP = () => {
-  return (
-    gulp
-      .src("src/php/**/*.php")
-      //   .pipe(uglify())
-      .pipe(gulp.dest("./"))
-      .pipe(browserSync.stream())
-  );
+
+// Funkcja sprawdzająca i kopiująca pliki PHP
+const checkPHP = (done) => {
+  if (projectType === "php") {
+    return gulp
+      .src(["src/php/**/*.php", "!src/php/index.php"]) // Pomijamy index.php
+      .pipe(gulp.dest("./"));
+  }
+  done();
 };
+
+// Funkcja kompilująca pliki .kit
 const compileKit = () => {
+  let ext = ".html";
+  if (projectType === "php") {
+    ext = ".php";
+  } else if (projectType === "node") {
+    ext = ".ejs"; // Bezpośrednio kompilujemy do .ejs
+  }
+
   return gulp
     .src(["html/**/*.kit", "!html/**/_*.kit"])
     .pipe(
@@ -151,49 +160,31 @@ const compileKit = () => {
         basepath: "@file",
       })
     )
-    .pipe(rename({ extname: ".html" }))
-    .pipe(gulp.dest("./"))
+    .pipe(rename({ extname: ext }))
+    .pipe(gulp.dest(projectType === "node" ? "views" : "./"))
     .on("end", () => {
-      console.log("Pliki .kit zostały skompilowane do .html");
+      console.log(`Pliki .kit zostały skompilowane do ${ext}`);
     });
 };
 
+// Funkcja minifikująca CSS
 function minifyCSS() {
   return gulp
     .src("src/sass/**/*.scss")
     .pipe(sass().on("error", sass.logError))
     .pipe(cleanCSS())
     .pipe(rename({ suffix: ".min" }))
-    .pipe(gulp.dest("dist/css"))
-    .pipe(browserSync.stream());
+    .pipe(gulp.dest("dist/css"));
 }
 
-const watch = () => {
-  browserSync.init({
-    server: {
-      baseDir: "./",
-    },
-  });
-
-  gulp.watch("html/**/*.kit", compileKit);
-  gulp.watch("html/**/*.kit", compileEjs);
-  gulp.watch("src/sass/**/*.scss", minifyCSS);
-  gulp.watch("src/js/**/*.js", minifyJS);
-  gulp.watch("src/php/**/*.php", checkPHP);
-  gulp.watch("src/img/**/*", copyImages);
-  gulp.watch("./*.html").on("change", browserSync.reload);
-  gulp.watch("src/sass/**/*.scss,").on("change", browserSync.reload);
-};
-
-// ---------------------------------------------------------------
-
+// Funkcja sprawdzająca aktualizacje pakietów
 import { promisify } from "util";
 import { exec as childExec } from "child_process";
 import ncu from "npm-check-updates";
 
 const exec = promisify(childExec);
 
-async function checkPackageUpdates() {
+async function checkPackageUpdates(done) {
   try {
     const upgraded = await ncu.run({
       packageFile: "package.json",
@@ -214,48 +205,34 @@ async function checkPackageUpdates() {
       `Wystąpił błąd podczas sprawdzania aktualizacji pakietów: ${error}`
     );
   }
+  done();
 }
 
-// ------------------------------------------------------------
-
-gulp.task("checkPackageUpdates", checkPackageUpdates);
-
-// --------------------------------------------------------------
-
-// PROJEKT BACKUP
-// --------------------------------------------------------------
-// --------------------------------------------------------------
+// Funkcja tworząca kopię zapasową projektu
 import zip from "gulp-zip";
 import path from "path";
 import { fileURLToPath } from "url";
 
-async function backupProject() {
+async function backupProject(done) {
   const currentPath = fileURLToPath(import.meta.url);
   const currentDir = path.dirname(currentPath);
   const projectName = path.basename(currentDir);
-  const backupName = `${projectName}.zip`;
-  const outputDirectory = "Z:/www";
+  const outputDirectory = process.env.BACKUP_PATH || "./backups";
   const projectDirectory = path.join(outputDirectory, projectName);
 
-  // Sprawdź, czy istnieje folder projektu w katalogu docelowym
-  try {
-    await fs.promises.access(projectDirectory);
-  } catch {
-    // Utwórz folder, jeśli nie istnieje
-    await fs.promises.mkdir(projectDirectory);
+  if (!fs.existsSync(projectDirectory)) {
+    fs.mkdirSync(projectDirectory, { recursive: true });
   }
 
-  // Usuń istniejący plik .zip w folderze projektu (jeśli istnieje)
+  const backupName = `${projectName}.zip`;
+
   const existingZipPath = path.join(projectDirectory, backupName);
-  try {
-    await fs.promises.access(existingZipPath);
-    await fs.promises.unlink(existingZipPath);
+  if (fs.existsSync(existingZipPath)) {
+    fs.unlinkSync(existingZipPath);
     console.log(`Usunięto istniejący plik: ${existingZipPath}`);
-  } catch {
-    // Nic nie rób, jeśli plik .zip nie istnieje
   }
 
-  return gulp
+  gulp
     .src(
       [
         "dist/**/*",
@@ -274,91 +251,165 @@ async function backupProject() {
       console.log(
         `Kopia zapasowa została utworzona: ${projectDirectory}/${backupName}`
       );
+      done();
     });
 }
 
-// --------------------------------------------------------------
+export { compressImages, optimizeImages, backupProject, checkPackageUpdates };
 
-// --------------------------------------------------------------
-// --------------------------------------------------------------
-gulp.task("compressImages", compressImages);
-gulp.task("optimizeImages", optimizeImages);
+// Funkcja tworząca foldery i pliki
+const checkFoldersAndFiles = gulp.series(createFolders, function (done) {
+  createFiles(projectType, done);
+});
 
-gulp.task("backup", backupProject);
-gulp.task("checkFoldersAndFiles", checkFoldersAndFiles);
-gulp.task("compileKit", gulp.series("checkFoldersAndFiles", compileKit));
-gulp.task("minifyCSS", minifyCSS);
-gulp.task("minifyJS", minifyJS);
-// gulp.task("compileEjs", compileEjs);
-gulp.task("compileEjs", gulp.series("checkFoldersAndFiles", compileEjs));
-gulp.task("checkPHP", checkPHP);
-// zadanie do uruchamiania serwera za pomocą nodemon
+// Funkcja startująca serwer
+export const startServer = (done) => {
+  if (projectType === "node") {
+    let started = false;
 
-gulp.task("start-server", function (done) {
-  nodemon({
-    script: "server.js",
-    ext: "js",
-    watch: [
-      "server.js",
-      "routes/**/*.js",
-      "html/**/*.kit",
-      "html/**/**/*.kit",
-      "src/sass/**/*.scss",
-      "**/*.js",
-      "**/*.kit",
-      "**/*.scss",
-    ],
-    env: { NODE_ENV: "development" },
-  })
-    .on("restart", function () {
-      console.log("Server restarted!");
-      browserSync.reload();
+    return nodemon({
+      script: "server.js",
+      ext: "js",
+      env: { ...process.env, NODE_ENV: "development" },
+      watch: ["server.js", "routes/**/*.js", "views/**/*.ejs"],
     })
-    .once("start", done);
-});
-
-function compileEjs() {
-  return gulp
-    .src(["html/**/*.kit", "!html/**/_*.kit"])
-    .pipe(
-      fileInclude({
-        prefix: "@@",
-        basepath: "@file",
+      .on("start", function () {
+        if (!started) {
+          started = true;
+          // Inicjalizacja BrowserSync
+          browserSync.init({
+            proxy: `http://localhost:${process.env.PORT || 3005}`,
+            port: 3000,
+            open: true,
+            notify: false,
+          });
+          console.log(
+            `Serwer Node.js uruchomiony na http://localhost:${
+              process.env.PORT || 3005
+            }`
+          );
+          done();
+        }
       })
-    )
-    .pipe(rename({ extname: ".ejs" })) // Change the extension to .ejs
-    .pipe(gulp.dest("views")) // Copy to views folder in the root directory
-    .pipe(browserSync.stream())
-    .on("end", function () {
-      browserSync.reload();
+      .on("restart", function () {
+        setTimeout(function () {
+          browserSync.reload();
+        }, 1000);
+        console.log("Server restarted!");
+      });
+  } else if (projectType === "php") {
+    // Uruchomienie serwera PHP z wyłączeniem open_basedir
+    phpConnect.server(
+      {
+        base: "./",
+        port: 8000,
+        keepalive: true,
+        ini: {
+          open_basedir: "none", // Wyłączenie restrykcji open_basedir
+        },
+      },
+      function () {
+        // Inicjalizacja BrowserSync
+        browserSync.init({
+          proxy: "127.0.0.1:8000",
+          files: ["./*.php", "dist/css/*.css", "dist/js/*.js"],
+          port: 3000,
+          open: true,
+          notify: false,
+        });
+        console.log("Serwer PHP uruchomiony na http://localhost:8000");
+        console.log("BrowserSync uruchomiony na http://localhost:3000");
+        done();
+      }
+    );
+  } else {
+    // Uruchomienie BrowserSync dla HTML
+    browserSync.init({
+      server: {
+        baseDir: "./",
+      },
+      port: 3000,
+      open: true,
+      notify: false,
     });
-}
+    console.log("BrowserSync uruchomiony na http://localhost:3000");
+    done();
+  }
+};
 
-gulp.task("watch", function () {
-  watch("server.js", function () {
-    gulp.series("start-server")();
-  });
-});
-gulp.task("copyImages", copyImages);
-gulp.task(
-  "watch",
-  gulp.series(
-    "compileKit",
-    "compileEjs",
-    "minifyCSS",
-    "minifyJS",
-    "copyImages",
-    "checkPHP",
-    "optimizeImages",
-    "start-server",
-    "watch",
-    watch
-  )
+// Funkcja obserwująca pliki
+export const watchFiles = gulp.series(
+  checkFoldersAndFiles,
+  compileKit,
+  minifyCSS,
+  minifyJS,
+  copyImages,
+  optimizeImages,
+  startServer,
+  function watchFiles() {
+    gulp.watch(
+      "html/**/*.kit",
+      gulp.series(compileKit, function (done) {
+        browserSync.reload();
+        done();
+      })
+    );
+    gulp.watch(
+      "src/sass/**/*.scss",
+      gulp.series(minifyCSS, function (done) {
+        browserSync.reload();
+        done();
+      })
+    );
+    gulp.watch(
+      "src/js/**/*.js",
+      gulp.series(minifyJS, function (done) {
+        browserSync.reload();
+        done();
+      })
+    );
+    gulp.watch(
+      "src/img/**/*",
+      gulp.series(copyImages, function (done) {
+        browserSync.reload();
+        done();
+      })
+    );
+
+    if (projectType === "node") {
+      gulp.watch("views/**/*.ejs").on("change", browserSync.reload);
+      gulp.watch("routes/**/*.js").on("change", function () {
+        browserSync.reload();
+      });
+    } else if (projectType === "php") {
+      gulp
+        .watch(["./*.php", "dist/css/*.css", "dist/js/*.js"])
+        .on("change", browserSync.reload);
+      gulp.watch(
+        "src/php/**/*.php",
+        gulp.series(checkPHP, function (done) {
+          browserSync.reload();
+          done();
+        })
+      );
+    } else if (projectType === "html") {
+      gulp
+        .watch(["./*.html", "dist/css/*.css", "dist/js/*.js"])
+        .on("change", browserSync.reload);
+    }
+
+    // Nie wywołujemy done(), aby zadanie trwało w nieskończoność
+  }
 );
 
-import { createServerFile } from "./createServerFile.mjs";
-
-gulp.task("createServerFile", createServerFile);
-gulp.task("default", gulp.series("createServerFile", "watch"));
-
-import nodemon from "nodemon";
+// Domyślne zadanie Gulp
+export default gulp.series(
+  detectProjectType,
+  async function decideProjectType() {
+    if (!projectType) {
+      await askProjectType();
+    }
+    console.log(`Projekt: ${projectType}`);
+  },
+  watchFiles
+);

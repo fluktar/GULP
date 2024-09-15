@@ -1,70 +1,39 @@
+// createFiles.mjs
 import fs from "fs";
+import path from "path";
 
-const createFiles = (done) => {
-  const filesToCreate = [
+const createFiles = (projectType, done) => {
+  const filesToCreate = [];
+
+  // Pliki wspólne dla wszystkich projektów
+  filesToCreate.push(
     {
       path: "html/index.kit",
       content: `<!DOCTYPE html>
 <html lang="pl">
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <link rel="stylesheet" href="/dist/css/style.min.css">
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta
+      name="description"
+      content="Opis strony"
+    />
+    <meta
+      name="keywords"
+      content="słowa kluczowe"
+    />
+    <meta name="robots" content="index, follow" />
+    <meta name="author" content="Twoje Imię" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tytuł strony</title>
+    <link rel="stylesheet" href="/dist/css/style.min.css" />
 </head>
 <body>
-    <h1>Hello All !</h1>
+    <h1>Hello All!</h1>
     @@include('_footer.kit')
     <script src="/dist/js/script.min.js"></script>
 </body>
 </html>`,
-    },
-    {
-      path: "routes/link.js",
-      content: `const express = require("express");
-			const router = express.Router();
-			router.get("/", (req, res, next) => {
-			  res.render("index");
-			});
-		
-			module.exports = router;`,
-    },
-    {
-      path: "data/database.js",
-      content: `
-      // decyduj który potrzebujesz sql czy mongo, pamiętaj, że trzeba uruchomić bazę danych przed przystąpieniem do programowania, chyba, że mongo to nie trzeba - ponieważ jest w chmurze ale może być i lokalnie.
-      //tutaj jest sql
-      const mysql = require("mysql2/promise");
-			const pool = mysql.createPool({
-			  host: "localhost",
-			  databasea: "blog",
-			  user: "root",
-			  password: "Sojokotojo1@3",
-			});
-			module.exports = pool;
-// ---------------------------------------------------------------
-//tutaj jest mongodb
-// const mongodb = require("mongodb");
-// const MongoClient = mongodb.MongoClient;
-// let database;
-// async function connect() {
-//   const client = await MongoClient.connect("mongodb://localhost:27017");
-//   database = client.db("blog");
-// }
-
-// function getDb() {
-//   if (!database) {
-//     throw new Error("Database not initialized");
-//   }
-//   return database;
-// }
-// module.exports = {
-//   connectToDatabase: connect,
-//   getDb: getDb,
-// };
-
-`,
     },
     {
       path: "html/_footer.kit",
@@ -72,272 +41,283 @@ const createFiles = (done) => {
     },
     {
       path: "src/sass/abstracts/_mixins.scss",
-      content: `
-      @mixin center {
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        position: absolute;
-      }
-      //MEDIA QUERY MIXINS
-      /*
-      0-600px - Phone
-      600-900px - Tablet portrait
-      900-1200px - Tablet landscape
-      1200-1800px - Desktop
-      1800px + - Big desktop
-      
-      $breakpoint: 
-      phone, 
-      tab-port, 
-      tab-land, 
-      big-desktop
-      1em = 16px
-      */
-      
-      // Mixin do obsługi responsywności, który stosuje style dla określonych breakpointów.
+      content: `@mixin center {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  position: absolute;
+}
+
+// Mixin do obsługi responsywności
 @mixin respond($breakpoint) {
-  
-  // Warunek dla breakpointu "phone"
   @if $breakpoint == "phone" {
-    // Zastosuj style, gdy szerokość ekranu jest większa lub równa 37.5em (600px)
     @media only screen and (min-width: 37.5em) {
       @content;
     }
-  }
-
-  // Warunek dla breakpointu "tab-port"
-  @if $breakpoint == "tab-port" {
-    // Zastosuj style, gdy szerokość ekranu jest większa lub równa 56.25em (900px)
+  } @else if $breakpoint == "tab-port" {
     @media only screen and (min-width: 56.25em) {
       @content;
     }
-  }
-
-  // Warunek dla breakpointu "tab-land"
-  @if $breakpoint == "tab-land" {
-    // Zastosuj style, gdy szerokość ekranu jest większa lub równa 75em (1200px)
+  } @else if $breakpoint == "tab-land" {
     @media only screen and (min-width: 75em) {
       @content;
     }
-  }
-
-  // Warunek dla breakpointu "big-desktop"
-  @if $breakpoint == "big-desktop" {
-    // Zastosuj style, gdy szerokość ekranu jest większa lub równa 112.5em (1800px)
+  } @else if $breakpoint == "big-desktop" {
     @media only screen and (min-width: 112.5em) {
       @content;
     }
   }
-}
-
-      `,
+}`,
     },
     {
       path: "src/sass/base/_base.scss",
-      content: `
-      *,
+      content: `@import "../abstracts/mixins";
+
+*,
 *::before,
 *::after {
   margin: 0;
   padding: 0;
   box-sizing: inherit;
 }
+
 html {
-  // Ustawienie bazowego rozmiaru czcionki na 62.5% (10px przy standardowym 16px, co odpowiada 1rem = 10px)
   font-size: 62.5%;
 
-  // Użycie mixinu "respond" dla breakpointu "phone"
   @include respond("phone") {
-    // Zwiększenie rozmiaru czcionki do 75% (12px przy standardowym 16px, co odpowiada 1rem = 12px)
     font-size: 75%;
   }
 
-  // Użycie mixinu "respond" dla breakpointu "tab-port"
   @include respond("tab-port") {
-    // Zwiększenie rozmiaru czcionki do 100% (16px przy standardowym 16px, co odpowiada 1rem = 16px)
     font-size: 100%;
   }
 
-  // Użycie mixinu "respond" dla breakpointu "tab-land"
   @include respond("tab-land") {
-    // Zwiększenie rozmiaru czcionki do 125% (20px przy standardowym 16px, co odpowiada 1rem = 20px)
     font-size: 125%;
   }
 
-  // Użycie mixinu "respond" dla breakpointu "big-desktop"
   @include respond("big-desktop") {
-    // Zwiększenie rozmiaru czcionki do 150% (24px przy standardowym 16px, co odpowiada 1rem = 24px)
     font-size: 150%;
   }
 }
+
 body {
   box-sizing: border-box;
-}
-
-      `,
+}`,
     },
     {
       path: "src/sass/base/_utilities.scss",
-      content: `
-      .u-center-text {
-        text-align: center !important;
-      }
-      .u-margin-bottom-big {
-        margin-bottom: 8rem !important;
-      }
-      .u-margin-bottom-small {
-        margin-bottom: 1.5rem !important;
-      }
-      .u-margin-bottom-medium {
-        margin-bottom: 4rem !important;
-      }
-      .u-margin-top-big {
-        margin-top: 8rem !important;
-      }
-      `,
+      content: `.u-center-text {
+  text-align: center;
+}
+.u-margin-bottom-big {
+  margin-bottom: 8rem;
+}
+.u-margin-bottom-medium {
+  margin-bottom: 4rem;
+}
+.u-margin-bottom-small {
+  margin-bottom: 1.5rem;
+}
+.u-margin-top-big {
+  margin-top: 8rem;
+}`,
     },
     {
       path: "src/sass/style.scss",
-      content: `
-      @import "abstracts/mixins";
-      @import "base/base";
-      @import "base/utilities";
-      
-      `,
+      content: `@import "abstracts/mixins";
+@import "base/base";
+@import "base/utilities";`,
     },
     {
       path: "src/js/script.js",
-      content: "'use strict'",
-    },
-    {
-      path: "src/php/index.php",
-      content: `<?php
-      function redirectToIndex() {
-          header('Location: index.html');
-          exit();
-      }
-      redirectToIndex();
-      
-      ?>`,
+      content: `'use strict';
+
+console.log('Script loaded');`,
     },
     {
       path: "instrukcja/instrukcja.md",
-      content: `
-# Instrukcja
+      content: `# Instrukcja
 
 ## Dodawanie plików zaimportowanych
 
-  Aby dodać plik zaimportowany, należy w \`index.kit\` dodać wpis \`@@include('_nav.kit')\`, a w utworzonym pliku dodać wpis np \`<nav></nav>\`.
+Aby dodać plik zaimportowany, należy w \`index.kit\` dodać wpis \`@@include('_nav.kit')\`, a w utworzonym pliku dodać zawartość np. \`<nav></nav>\`.
 
 ## Sprawdzanie aktualizacji pakietów
 
-  Aby sprawdzić aktualizacje pakietów i utworzyć plik z informacjami o aktualizacjach, wykonaj następujące kroki:
+Aby sprawdzić aktualizacje pakietów i utworzyć plik z informacjami o aktualizacjach:
 
-  1. Otwórz terminal w katalogu głównym projektu.
-  2. Wpisz polecenie \`gulp checkPackageUpdates\`.
-  3. Zadanie sprawdzi dostępne aktualizacje pakietów i wyświetli informacjami o aktualizacjach.
+1. Otwórz terminal w katalogu głównym projektu.
+2. Wpisz polecenie \`gulp checkPackageUpdates\`.
+3. Zadanie sprawdzi dostępne aktualizacje pakietów i wyświetli informacje o nich.
 
-  Pamiętaj, aby regularnie sprawdzać aktualizacje, aby utrzymać swoje zależności na bieżąco.
-  
 ## Tworzenie kopii zapasowej
 
-Aby utworzyć kopię zapasową folderów "dist", "html", "instrukcja", "src" oraz plików "gulpfile.mjs", ".gitignore" i "package.json", wykonaj następujące kroki:
+Aby utworzyć kopię zapasową projektu:
 
-1. Upewnij się, że dodano funkcję "backupProject" oraz odpowiednie importy do pliku "gulpfile.mjs" oraz zdefiniowano nowe zadanie Gulp o nazwie "backup".
+1. Upewnij się, że w pliku \`gulpfile.mjs\` zdefiniowane jest zadanie \`backupProject\`.
+2. Otwórz terminal w katalogu głównym projektu.
+3. Wpisz polecenie \`gulp backup\`.
+4. Kopia zostanie utworzona w folderze określonym w zmiennej \`BACKUP_PATH\` w pliku \`.env\`.
 
-2. Otwórz konsolę i przejdź do katalogu głównego projektu.
+## Ustawienia środowiskowe
 
-3. Wpisz w konsoli polecenie: gulp backup
+Pamiętaj, aby utworzyć plik \`.env\` w katalogu głównym projektu i dodać do niego odpowiednie zmienne środowiskowe, takie jak klucz API TinyPNG i dane dostępu do bazy danych.
 
-4. Kopia zostanie wykonana "Z:_www"
-5. w Katalogu głównym sprawdz plik nr.txt w którym będzie unikalny numer backup utworzonego dla twojej kopii
-6. Utworzona kopia będzie miała nazwę z tym numerem
+Przykład pliku \`.env\`:
 
-## Pamiętaj o meta
+\`\`\`
+TINYPNG_API_KEY=Twój_Klucz_API_TinyPNG
+DB_HOST=localhost
+DB_NAME=blog
+DB_USER=root
+DB_PASSWORD=TwojeHasło
+BACKUP_PATH=./backups
+PORT=3005
+\`\`\`
 
-<!-- <meta
-      name="description"
-      content="Jesteśmy młodym "
-    />
-    <meta
-      name="keywords"
-      content="tworzenie stron www... "
-    />
-    <meta name="robots" content="index, follow">
-    <meta name="author" content="uroboros.online">
-</meta> -->
+Upewnij się, że plik \`.env\` jest dodany do pliku \`.gitignore\`, aby nie został przypadkowo opublikowany.
 
 ## Kompresja obrazów za pomocą TinyPNG
 
-Funkcja "compressImages" pozwala na kompresję obrazów w formatach PNG, JPG i JPEG za pomocą usługi TinyPNG. Kompresja obrazów może znacznie zmniejszyć ich rozmiar, co przekłada się na szybsze wczytywanie strony.
+Funkcja \`compressImages\` kompresuje obrazy za pomocą usługi TinyPNG. Upewnij się, że masz klucz API w pliku \`.env\`.
 
-Aby skorzystać z funkcji "compressImages", należy wykonać następujące kroki:
+## Uruchamianie projektu
 
-1. Upewnij się, że pakiet "gulp-tinypng-compress" jest zainstalowany w projekcie (jeśli nie, postępuj zgodnie z wcześniejszymi instrukcjami instalacji).
+1. Upewnij się, że masz zainstalowane wszystkie zależności: \`npm install\`.
+2. Uruchom projekt: \`gulp\`.
 
-2. Zamień "YOUR_API_KEY" na klucz API TinyPNG w funkcji "compressImages" w pliku "gulpfile.mjs". Klucz API można uzyskać, rejestrując się na stronie [TinyPNG Developer API](https://tinypng.com/developers).
+## Dodatkowe informacje
 
-3. Uruchom zadanie Gulp, które kompresuje obrazy za pomocą TinyPNG. Otwórz terminal w katalogu głównym projektu i wpisz polecenie:
-
-gulp compressImages
-
-Skompresowane obrazy zostaną zapisane w folderze "dist/img".
-
-## Wyjaśnienie funkcji
-
-createServerFile() - Funkcja createServerFile tworzy plik server.js, który służy jako prosty serwer HTTP. Dzięki temu można szybko uruchomić lokalny serwer, aby sprawdzić działanie aplikacji lub strony internetowej w środowisku deweloperskim.
-  
-Plik server.js jest tworzony w głównym katalogu projektu (tam, gdzie znajduje się plik gulpfile.mjs).
- 
-Aby uruchomić serwer, otwórz terminal w głównym katalogu projektu i wpisz:
-
-node server.js
-
-Po uruchomieniu, serwer będzie dostępny pod adresem http://localhost:3005/.
-
-compressImages - funkcja kompresuje obrazy w formatach PNG, JPG i JPEG za pomocą usługi TinyPNG. Skompresowane obrazy zostają zapisane w folderze "dist/img".
-
-optimizeImages - funkcja optymalizuje obrazy, zmniejszając ich rozmiar bez znacznego wpływu na jakość. Obrazy zoptymalizowane zostają zapisane w folderze "dist/img".
-
-createFolders - funkcja tworzy foldery niezbędne do prawidłowego działania projektu, jeśli jeszcze nie istnieją.
-
-copyImages - funkcja kopiuje obrazy z folderu "src/img" do folderu "dist/img".
-
-checkFoldersExist - funkcja sprawdza, czy wszystkie potrzebne foldery istnieją.
-
-createFiles - funkcja tworzy pliki niezbędne do prawidłowego działania projektu, jeśli jeszcze nie istnieją.
-
-checkFoldersAndFiles - funkcja wywołuje funkcje createFolders oraz createFiles.
-
-minifyJS - funkcja minifikuje pliki JavaScript z folderu "src/js" i zapisuje je w folderze "dist/js" z rozszerzeniem ".min.js".
-
-checkPHP - funkcja kopiuje pliki PHP z folderu "src/php" do głównego folderu projektu.
-
-compileKit - funkcja kompiluje pliki .kit z folderu "html" do plików .html i zapisuje je w głównym folderze projektu.
-
-minifyCSS - funkcja kompiluje i minifikuje pliki SCSS z folderu "src/sass" do plików CSS, zapisując je w folderze "dist/css" z rozszerzeniem ".min.css".
-
-watch - funkcja monitoruje zmiany we wszystkich plikach projektu i wywołuje odpowiednie funkcje, gdy pliki zostają zmienione. Ponadto, funkcja synchronizuje przeglądarkę, aby odświeżać stronę po każdej zmianie.
-
-checkPackageUpdates - funkcja sprawdza dostępne aktualizacje pakietów npm, a następnie tworzy plik "aktualizacja.txt" z informacjami o aktualizacjach.
-
-backupProject - funkcja tworzy kopię zapasową projektu, zapisując ją jako plik .zip w określonym katalogu.`,
+- Pliki SCSS znajdują się w folderze \`src/sass\`.
+- Pliki JavaScript znajdują się w folderze \`src/js\`.
+- Pliki szablonów \`.kit\` znajdują się w folderze \`html\`.
+`,
     },
     {
-      path: ".gitignore", // Dodanie pliku .gitignore w katalogu głównym
-      content: `node_modules
-	src
-	html
-	gulpfile.mjs
-	package.json
-	package-lock.json
-	*.log`,
-    },
-  ];
+      path: ".gitignore",
+      content: `node_modules/
+dist/
+.env
+*.log
+*.zip`,
+    }
+  );
+
+  // Pliki specyficzne dla Node
+  if (projectType === "node") {
+    filesToCreate.push(
+      {
+        path: "server.js",
+        content: `import path from "path";
+import express from "express";
+import routs from "./routes/link.js";
+import db from "./data/database.js";
+import browserSync from "browser-sync";
+
+const app = express();
+const __dirname = path.resolve();
+
+// Aktywacja silnika widoków EJS
+app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "views"));
+
+app.use(express.urlencoded({ extended: true })); // Parsowanie ciał żądań
+app.use("/dist", express.static("dist")); // Serwowanie plików statycznych
+
+app.use(routs);
+
+// Obsługa błędów
+app.use(function (error, req, res, next) {
+  console.log(error);
+  res.status(500).render("500");
+});
+
+const port = process.env.PORT || 3005;
+app.listen(port, function () {
+  console.log(\`Server is running on port \${port}\`);
+
+  // Inicjalizacja BrowserSync
+  browserSync.init({
+    proxy: \`http://localhost:\${port}\`,
+    files: ["views/**/*.ejs", "dist/css/*.css", "dist/js/*.js"],
+    port: 3000,
+    open: false,
+    notify: false,
+  });
+});
+`,
+      },
+      {
+        path: "routes/link.js",
+        content: `import express from "express";
+const router = express.Router();
+
+router.get("/", (req, res, next) => {
+  res.render("index");
+});
+
+export default router;`,
+      },
+      {
+        path: "data/database.js",
+        content: `import mysql from "mysql2/promise";
+const pool = mysql.createPool({
+  host: process.env.DB_HOST,
+  database: process.env.DB_NAME,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+});
+
+export default pool;
+
+// Jeśli używasz MongoDB, użyj poniższego kodu i odpowiednio zmodyfikuj plik .env
+/*
+import mongodb from "mongodb";
+const MongoClient = mongodb.MongoClient;
+let database;
+
+async function connect() {
+  const client = await MongoClient.connect(process.env.MONGODB_URI);
+  database = client.db("blog");
+}
+
+export function getDb() {
+  if (!database) {
+    throw new Error("Database not initialized");
+  }
+  return database;
+}
+
+export default {
+  connectToDatabase: connect,
+  getDb: getDb,
+};
+*/
+`,
+      },
+      {
+        path: "views/500.ejs",
+        content: `<h1>Błąd serwera</h1>
+<p>Przepraszamy, wystąpił błąd serwera.</p>`,
+      }
+    );
+  }
+
+  // Pliki specyficzne dla PHP
+  if (projectType === "php") {
+    filesToCreate.push({
+      path: "src/php/app.php",
+      content: `<?php
+// Twój kod PHP
+?>`,
+    });
+  }
 
   filesToCreate.forEach((file) => {
     if (!fs.existsSync(file.path)) {
+      // Upewnij się, że katalog dla pliku istnieje
+      fs.mkdirSync(path.dirname(file.path), { recursive: true });
       fs.writeFileSync(file.path, file.content);
       console.log(`Plik "${file.path}" został utworzony.`);
     } else {
