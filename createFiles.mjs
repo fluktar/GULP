@@ -41,12 +41,7 @@ const createFiles = (projectType, done) => {
     },
     {
       path: "src/sass/abstracts/_mixins.scss",
-      content: `@mixin center {
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  position: absolute;
-}
+      content: `
 
 // Mixin do obsługi responsywności
 @mixin respond($breakpoint) {
@@ -71,7 +66,7 @@ const createFiles = (projectType, done) => {
     },
     {
       path: "src/sass/base/_base.scss",
-      content: `@import "../abstracts/mixins";
+      content: `@use "../abstracts/mixins";
 
 *,
 *::before,
@@ -84,19 +79,19 @@ const createFiles = (projectType, done) => {
 html {
   font-size: 62.5%;
 
-  @include respond("phone") {
+  @include mixins.respond("phone") {
     font-size: 75%;
   }
 
-  @include respond("tab-port") {
+  @include mixins.respond("tab-port") {
     font-size: 100%;
   }
 
-  @include respond("tab-land") {
+  @include mixins.respond("tab-land") {
     font-size: 125%;
   }
 
-  @include respond("big-desktop") {
+  @include mixins.respond("big-desktop") {
     font-size: 150%;
   }
 }
@@ -125,9 +120,9 @@ body {
     },
     {
       path: "src/sass/style.scss",
-      content: `@import "abstracts/mixins";
-@import "base/base";
-@import "base/utilities";`,
+      content: `@use "abstracts/mixins";
+@use "base/base";
+@use "base/utilities";`,
     },
     {
       path: "src/js/script.js",
