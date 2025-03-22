@@ -41,7 +41,12 @@ const createFiles = (projectType, done) => {
     },
     {
       path: "src/sass/abstracts/_mixins.scss",
-      content: `
+      content: `@mixin center {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  position: absolute;
+}
 
 // Mixin do obsługi responsywności
 @mixin respond($breakpoint) {
@@ -66,7 +71,7 @@ const createFiles = (projectType, done) => {
     },
     {
       path: "src/sass/base/_base.scss",
-      content: `@use "../abstracts/mixins";
+      content: `@import "../abstracts/mixins";
 
 *,
 *::before,
@@ -79,19 +84,19 @@ const createFiles = (projectType, done) => {
 html {
   font-size: 62.5%;
 
-  @include mixins.respond("phone") {
+  @include respond("phone") {
     font-size: 75%;
   }
 
-  @include mixins.respond("tab-port") {
+  @include respond("tab-port") {
     font-size: 100%;
   }
 
-  @include mixins.respond("tab-land") {
+  @include respond("tab-land") {
     font-size: 125%;
   }
 
-  @include mixins.respond("big-desktop") {
+  @include respond("big-desktop") {
     font-size: 150%;
   }
 }
@@ -120,9 +125,9 @@ body {
     },
     {
       path: "src/sass/style.scss",
-      content: `@use "abstracts/mixins";
-@use "base/base";
-@use "base/utilities";`,
+      content: `@import "abstracts/mixins";
+@import "base/base";
+@import "base/utilities";`,
     },
     {
       path: "src/js/script.js",
@@ -205,44 +210,50 @@ dist/
       {
         path: "server.js",
         content: `import path from "path";
-import express from "express";
-import routs from "./routes/link.js";
-import db from "./data/database.js";
-import browserSync from "browser-sync";
-
-const app = express();
-const __dirname = path.resolve();
-
-// Aktywacja silnika widoków EJS
-app.set("view engine", "ejs");
-app.set("views", path.join(__dirname, "views"));
-
-app.use(express.urlencoded({ extended: true })); // Parsowanie ciał żądań
-app.use("/dist", express.static("dist")); // Serwowanie plików statycznych
-
-app.use(routs);
-
-// Obsługa błędów
-app.use(function (error, req, res, next) {
-  console.log(error);
-  res.status(500).render("500");
-});
-
-const port = process.env.PORT || 3005;
-app.listen(port, function () {
-  console.log(\`Server is running on port \${port}\`);
-
-  // Inicjalizacja BrowserSync
-  browserSync.init({
-    proxy: \`http://localhost:\${port}\`,
-    files: ["views/**/*.ejs", "dist/css/*.css", "dist/js/*.js"],
-    port: 3000,
-    open: false,
-    notify: false,
-  });
-});
-`,
+      import express from "express";
+      import routs from "./routes/link.js";
+      import db from "./data/database.js";
+      import browserSync from "browser-sync";
+      import { time } from "console";
+      import dotenv from "dotenv";
+      dotenv.config(); // Wczytaj zmienne środowiskowe z pliku .env
+      
+      const app = express();
+      const __dirname = path.resolve();
+      
+      // Aktywacja silnika widoków EJS
+      app.set("view engine", "ejs");
+      app.set("views", path.join(__dirname, "views"));
+      
+      app.use(express.urlencoded({ extended: true })); // Parsowanie ciał żądań
+      app.use("/dist", express.static("dist")); // Serwowanie plików statycznych
+      
+      app.use(routs);
+      
+      // Obsługa błędów
+      app.use(function (error, req, res, next) {
+        console.log(error);
+        res.status(500).render("500");
+      });
+      
+      const port = process.env.PORT || 3005;
+      const browserSyncPort = parseInt(port, 10) + 1; // Port BrowserSync to PORT + 1
+      
+      app.listen(port, function () {
+        console.log(\`Server is running on port \${port}\`);
+      
+        const bs = browserSync.create();
+        bs.init({
+          proxy: \`http://localhost:\${port}\`, // Proxy dla serwera Express
+          files: ["views/**/*.ejs", "dist/css/*.css", "dist/js/*.js"],
+          port: browserSyncPort,
+          open: true,
+          notify: true,
+        });
+      });
+      `,
       },
+
       {
         path: "routes/link.js",
         content: `import express from "express";
