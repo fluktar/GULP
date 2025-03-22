@@ -51,18 +51,18 @@ const createFiles = (projectType, done) => {
 // Mixin do obsługi responsywności
 @mixin respond($breakpoint) {
   @if $breakpoint == "phone" {
-    @media only screen and (min-width: 37.5em) {
+    @media only screen and (min_width: 37.5em) {
       @content;
     }
-  } @else if $breakpoint == "tab-port" {
+  } @else if $breakpoint == "tab_port" {
     @media only screen and (min-width: 56.25em) {
       @content;
     }
-  } @else if $breakpoint == "tab-land" {
+  } @else if $breakpoint == "tab_land" {
     @media only screen and (min-width: 75em) {
       @content;
     }
-  } @else if $breakpoint == "big-desktop" {
+  } @else if $breakpoint == "big_desktop" {
     @media only screen and (min-width: 112.5em) {
       @content;
     }
@@ -88,15 +88,15 @@ html {
     font-size: 75%;
   }
 
-  @include respond("tab-port") {
+  @include respond("tab_port") {
     font-size: 100%;
   }
 
-  @include respond("tab-land") {
+  @include respond("tab_land") {
     font-size: 125%;
   }
 
-  @include respond("big-desktop") {
+  @include respond("big_desktop") {
     font-size: 150%;
   }
 }
