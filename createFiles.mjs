@@ -210,48 +210,68 @@ dist/
       {
         path: "server.js",
         content: `import path from "path";
-      import express from "express";
-      import routs from "./routes/link.js";
-      import db from "./data/database.js";
-      import browserSync from "browser-sync";
-      import { time } from "console";
-      import dotenv from "dotenv";
-      dotenv.config(); // Wczytaj zmienne środowiskowe z pliku .env
-      
-      const app = express();
-      const __dirname = path.resolve();
-      
-      // Aktywacja silnika widoków EJS
-      app.set("view engine", "ejs");
-      app.set("views", path.join(__dirname, "views"));
-      
-      app.use(express.urlencoded({ extended: true })); // Parsowanie ciał żądań
-      app.use("/dist", express.static("dist")); // Serwowanie plików statycznych
-      
-      app.use(routs);
-      
-      // Obsługa błędów
-      app.use(function (error, req, res, next) {
-        console.log(error);
-        res.status(500).render("500");
-      });
-      
-      const port = process.env.PORT || 3005;
-      const browserSyncPort = parseInt(port, 10) + 1; // Port BrowserSync to PORT + 1
-      
-      app.listen(port, function () {
-        console.log(\`Server is running on port \${port}\`);
-      
-        const bs = browserSync.create();
-        bs.init({
-          proxy: \`http://localhost:\${port}\`, // Proxy dla serwera Express
-          files: ["views/**/*.ejs", "dist/css/*.css", "dist/js/*.js"],
-          port: browserSyncPort,
-          open: true,
-          notify: true,
-        });
-      });
-      `,
+import express from "express";
+import routs from "./routes/link.js";
+import db from "./data/database.js";
+import browserSync from "browser-sync";
+import { time } from "console";
+import dotenv from "dotenv";
+import net from "net";
+dotenv.config(); // Wczytaj zmienne środowiskowe z pliku .env
+
+const app = express();
+const __dirname = path.resolve();
+
+// Aktywacja silnika widoków EJS
+app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "views"));
+
+app.use(express.urlencoded({ extended: true })); // Parsowanie ciał żądań
+app.use("/dist", express.static("dist")); // Serwowanie plików statycznych
+
+app.use(routs);
+
+// Obsługa błędów
+app.use(function (error, req, res, next) {
+  console.log(error);
+  res.status(500).render("500");
+});
+
+async function findFreePort(startPort = 3000, maxPort = 3100) {
+  for (let port = startPort; port <= maxPort; port++) {
+    const isFree = await new Promise((resolve) => {
+      const tester = net
+        .createServer()
+        .once("error", () => resolve(false))
+        .once("listening", () => {
+          tester.close();
+          resolve(true);
+        })
+        .listen(port);
+    });
+    if (isFree) return port;
+  }
+  throw new Error("Brak wolnych portów w zakresie!");
+}
+
+(async () => {
+  const port = await findFreePort(3000, 3100);
+  const browserSyncPort = port + 1;
+
+  app.listen(port, function () {
+    console.log(\`Server is running on port \${port}\`);
+
+    const bs = browserSync.create();
+    bs.init({
+      proxy: \`http://localhost:\${port}\`,
+      files: ["views/**/*.ejs", "dist/css/*.css", "dist/js/*.js"],
+      port: browserSyncPort,
+      open: true,
+      notify: true,
+    });
+  });
+})();
+`,
       },
 
       {

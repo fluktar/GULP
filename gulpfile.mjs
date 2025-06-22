@@ -1,10 +1,11 @@
 // gulpfile.mjs
 import gulp from "gulp";
 import browserSyncModule from "browser-sync";
-import nodemon from "gulp-nodemon";
 import fs from "fs";
 import cleanCSS from "gulp-clean-css";
-import sass from "gulp-dart-sass";
+import * as sass from "sass";
+import gulpSass from "gulp-sass";
+const sassCompiler = gulpSass(sass);
 import uglify from "gulp-uglify";
 import fileInclude from "gulp-file-include";
 import rename from "gulp-rename";
@@ -17,6 +18,10 @@ import { createFiles } from "./createFiles.mjs";
 import dotenv from "dotenv";
 import inquirer from "inquirer";
 import phpConnect from "gulp-connect-php";
+import { spawn } from "child_process";
+import plumber from "gulp-plumber";
+import notify from "gulp-notify";
+import chalk from "chalk";
 
 dotenv.config();
 
@@ -28,12 +33,12 @@ export let projectType;
 function detectProjectType(done) {
   if (fs.existsSync("server.js")) {
     projectType = "node";
-    console.log("Wykryto projekt Node.js");
+    console.log(chalk.green("Wykryto projekt Node.js"));
   } else if (fs.existsSync("index.php") || fs.existsSync("src/php")) {
     projectType = "php";
-    console.log("Wykryto projekt PHP");
+    console.log(chalk.blue("Wykryto projekt PHP"));
   } else {
-    console.log("Nie udało się wykryć typu projektu.");
+    console.log(chalk.yellow("Nie udało się wykryć typu projektu."));
   }
   done();
 }
@@ -50,7 +55,7 @@ async function askProjectType() {
     },
   ]);
   projectType = answers.projectType;
-  console.log(`Wybrano projekt: ${projectType}`);
+  console.log(chalk.cyan(`Wybrano projekt: ${projectType}`));
 }
 
 // Funkcja tworząca foldery
@@ -82,9 +87,9 @@ function createFolders(done) {
   foldersToCreate.forEach((folder) => {
     if (!fs.existsSync(folder)) {
       fs.mkdirSync(folder, { recursive: true });
-      console.log(`Folder "${folder}" został utworzony.`);
+      console.log(chalk.green(`Folder "${folder}" został utworzony.`));
     } else {
-      console.log(`Folder "${folder}" już istnieje.`);
+      console.log(chalk.gray(`Folder "${folder}" już istnieje.`));
     }
   });
 
@@ -128,6 +133,15 @@ const copyImages = () => {
 const minifyJS = () => {
   return gulp
     .src("src/js/**/*.js")
+    .pipe(
+      plumber({
+        errorHandler: notify.onError({
+          title: "Błąd JS",
+          message: "<%= error.message %>",
+          sound: "Funk",
+        }),
+      })
+    )
     .pipe(uglify())
     .pipe(rename({ suffix: ".min" }))
     .pipe(gulp.dest("dist/js"));
@@ -163,7 +177,7 @@ const compileKit = () => {
     .pipe(rename({ extname: ext }))
     .pipe(gulp.dest(projectType === "node" ? "views" : "./"))
     .on("end", () => {
-      console.log(`Pliki .kit zostały skompilowane do ${ext}`);
+      console.log(chalk.magenta(`Pliki .kit zostały skompilowane do ${ext}`));
     });
 };
 
@@ -171,7 +185,16 @@ const compileKit = () => {
 function minifyCSS() {
   return gulp
     .src("src/sass/**/*.scss")
-    .pipe(sass().on("error", sass.logError))
+    .pipe(
+      plumber({
+        errorHandler: notify.onError({
+          title: "Błąd SCSS",
+          message: "<%= error.message %>",
+          sound: "Funk",
+        }),
+      })
+    )
+    .pipe(sassCompiler().on("error", sassCompiler.logError))
     .pipe(cleanCSS())
     .pipe(rename({ suffix: ".min" }))
     .pipe(gulp.dest("dist/css"));
@@ -192,17 +215,21 @@ async function checkPackageUpdates(done) {
     });
 
     if (!Object.keys(upgraded).length) {
-      console.log("Wszystkie pakiety są aktualne.");
+      console.log(chalk.green("Wszystkie pakiety są aktualne."));
     } else {
       const updateInfo = Object.entries(upgraded)
         .map(([key, value]) => `${key}: ${value}`)
         .join("\n");
-      console.log(`Znaleziono aktualizacje pakietów:\n${updateInfo}`);
+      console.log(
+        chalk.yellow(`Znaleziono aktualizacje pakietów:\n${updateInfo}`)
+      );
       fs.writeFileSync("aktualizacja.txt", updateInfo);
     }
   } catch (error) {
     console.error(
-      `Wystąpił błąd podczas sprawdzania aktualizacji pakietów: ${error}`
+      chalk.red(
+        `Wystąpił błąd podczas sprawdzania aktualizacji pakietów: ${error}`
+      )
     );
   }
   done();
@@ -249,7 +276,9 @@ async function backupProject(done) {
     .pipe(gulp.dest(projectDirectory))
     .on("end", () => {
       console.log(
-        `Kopia zapasowa została utworzona: ${projectDirectory}/${backupName}`
+        chalk.green(
+          `Kopia zapasowa została utworzona: ${projectDirectory}/${backupName}`
+        )
       );
       done();
     });
@@ -263,40 +292,45 @@ const checkFoldersAndFiles = gulp.series(createFolders, function (done) {
 });
 
 // Funkcja startująca serwer
-export const startServer = (done) => {
+export const startServer = async (done) => {
   if (projectType === "node") {
-    let started = false;
-
-    return nodemon({
-      script: "server.js",
-      ext: "js",
-      env: { ...process.env, NODE_ENV: "development" },
-      watch: ["server.js", "routes/**/*.js", "views/**/*.ejs"],
-    })
-      .on("start", function () {
-        if (!started) {
-          started = true;
-          // Inicjalizacja BrowserSync
-          browserSync.init({
-            proxy: `http://localhost:${process.env.PORT || 3005}`,
-            port: 3000,
-            open: true,
-            notify: false,
-          });
-          console.log(
-            `Serwer Node.js uruchomiony na http://localhost:${
-              process.env.PORT || 3005
-            }`
-          );
-          done();
-        }
-      })
-      .on("restart", function () {
-        setTimeout(function () {
-          browserSync.reload();
-        }, 1000);
-        console.log("Server restarted!");
-      });
+    // Pobierz port z server.js (dynamiczny)
+    let port = process.env.PORT || 3005;
+    try {
+      // Odczytaj port z pliku .env jeśli istnieje
+      if (fs.existsSync(".env")) {
+        const envContent = fs.readFileSync(".env", "utf-8");
+        const match = envContent.match(/^PORT=(\d+)/m);
+        if (match) port = match[1];
+      }
+    } catch (e) {}
+    let nodeProcess = spawn("node", ["server.js"], { stdio: "inherit" });
+    process.on("exit", () => nodeProcess.kill());
+    process.on("SIGINT", () => {
+      nodeProcess.kill();
+      process.exit();
+    });
+    // Nasłuchuj komendy 'exit' w terminalu
+    process.stdin.resume();
+    process.stdin.setEncoding("utf8");
+    process.stdin.on("data", function (data) {
+      if (data.trim() === "exit") {
+        nodeProcess.kill();
+        process.exit();
+      }
+    });
+    // Inicjalizacja BrowserSync na tym samym porcie co serwer node + 1
+    const browserSyncPort = parseInt(port, 10) + 1;
+    browserSync.init({
+      proxy: `http://localhost:${port}`,
+      port: browserSyncPort,
+      open: true,
+      notify: false,
+    });
+    console.log(
+      chalk.green(`Serwer Node.js uruchomiony na http://localhost:${port}`)
+    );
+    done();
   } else if (projectType === "php") {
     // Uruchomienie serwera PHP z wyłączeniem open_basedir
     phpConnect.server(
@@ -317,8 +351,12 @@ export const startServer = (done) => {
           open: true,
           notify: false,
         });
-        console.log("Serwer PHP uruchomiony na http://localhost:8000");
-        console.log("BrowserSync uruchomiony na http://localhost:3000");
+        console.log(
+          chalk.blue("Serwer PHP uruchomiony na http://localhost:8000")
+        );
+        console.log(
+          chalk.green("BrowserSync uruchomiony na http://localhost:3000")
+        );
         done();
       }
     );
@@ -332,7 +370,9 @@ export const startServer = (done) => {
       open: true,
       notify: false,
     });
-    console.log("BrowserSync uruchomiony na http://localhost:3000");
+    console.log(
+      chalk.green("BrowserSync uruchomiony na http://localhost:3000")
+    );
     done();
   }
 };
@@ -409,7 +449,7 @@ export default gulp.series(
     if (!projectType) {
       await askProjectType();
     }
-    console.log(`Projekt: ${projectType}`);
+    console.log(chalk.cyan(`Projekt: ${projectType}`));
   },
   watchFiles
 );
