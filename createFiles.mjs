@@ -35,6 +35,15 @@ const createFiles = (projectType, done) => {
       content: "<footer></footer>",
     },
     {
+      path: "src/sass/abstracts/_variables.scss",
+      content: `$breakpoints: (
+  phone: 37.5em,       // ~600px
+  tab_port: 56.25em,   // ~900px
+  tab_land: 75em,      // ~1200px
+  big_desktop: 112.5em // ~1800px
+);`,
+    },
+    {
       path: "src/sass/abstracts/_mixins.scss",
       content: `@mixin center {
   top: 50%;
@@ -43,25 +52,53 @@ const createFiles = (projectType, done) => {
   position: absolute;
 }
 
-// Mixin do obsługi responsywności
+@use "./variables" as *;
+
+// Mixin do obsługi responsywności (wstecznie kompatybilny)
 @mixin respond($breakpoint) {
-  @if $breakpoint == "phone" {
-    @media only screen and (min-width: 37.5em) {
-      @content;
-    }
-  } @else if $breakpoint == "tab_port" {
-    @media only screen and (min-width: 56.25em) {
-      @content;
-    }
-  } @else if $breakpoint == "tab_land" {
-    @media only screen and (min-width: 75em) {
-      @content;
-    }
-  } @else if $breakpoint == "big_desktop" {
-    @media only screen and (min-width: 112.5em) {
+  $min: map-get($breakpoints, $breakpoint);
+  @if $min {
+    @media only screen and (min-width: $min) {
       @content;
     }
   }
+}
+
+// Dodatkowe, bardziej elastyczne mixiny
+@mixin respond-up($breakpoint) {
+  $min: map-get($breakpoints, $breakpoint);
+  @if $min {
+    @media only screen and (min-width: $min) {
+      @content;
+    }
+  }
+}
+
+@mixin respond-down($breakpoint) {
+  $max: map-get($breakpoints, $breakpoint);
+  @if $max {
+    @media only screen and (max-width: $max) {
+      @content;
+    }
+  }
+}
+
+@mixin respond-between($from, $to) {
+  $min: map-get($breakpoints, $from);
+  $max: map-get($breakpoints, $to);
+  @if $min and $max {
+    @media only screen and (min-width: $min) and (max-width: $max) {
+      @content;
+    }
+  }
+}
+
+// Płynna typografia (clamp)
+// Przykład: @include fluid-type(16px, 24px, phone, tab_land);
+@mixin fluid-type($minSize, $maxSize, $from: phone, $to: tab_land) {
+  $min: map-get($breakpoints, $from);
+  $max: map-get($breakpoints, $to);
+  font-size: clamp(#{$minSize}, calc(#{$minSize} + (#{strip-unit($maxSize - $minSize)} * (100vw - #{$min})) / (#{strip-unit($max - $min)})), #{$maxSize});
 }`,
     },
     {
@@ -99,6 +136,19 @@ html {
 body {
   box-sizing: border-box;
 }`,
+
+// Uniwersalny kontener
+.container {
+  width: min(100% - 2rem, 120rem);
+  margin-inline: auto;
+  padding-inline: 1rem;
+}
+
+// Przykład płynnej typografii dla h1 (możesz przenieść do komponentów)
+h1 {
+  @include mixins.fluid-type(2.4rem, 4rem, phone, tab_land);
+  line-height: 1.15;
+}
     },
     {
       path: "src/sass/base/_utilities.scss",
@@ -119,8 +169,9 @@ body {
 }`,
     },
     {
-      path: "src/sass/style.scss",
-      content: `@use "abstracts/mixins";
+  path: "src/sass/style.scss",
+  content: `@use "abstracts/variables";
+@use "abstracts/mixins";
 @use "base/base";
 @use "base/utilities";`,
     },
