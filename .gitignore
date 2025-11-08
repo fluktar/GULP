@@ -3,3 +3,7 @@ dist/
 .env
 *.log
 *.zip
+backups/
+aktualizacja.txt
+nodemon.json
+src/img/.tinify-cache.json

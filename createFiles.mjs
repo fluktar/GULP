@@ -14,25 +14,20 @@ const createFiles = (projectType, done) => {
 <head>
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta
-      name="description"
-      content="Opis strony"
-    />
-    <meta
-      name="keywords"
-      content="słowa kluczowe"
-    />
+    <meta name="description" content="Opis strony" />
+    <meta name="keywords" content="słowa kluczowe" />
     <meta name="robots" content="index, follow" />
     <meta name="author" content="Twoje Imię" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tytuł strony</title>
     <link rel="stylesheet" href="/dist/css/style.min.css" />
+    
 </head>
 <body>
     <h1>Hello All!</h1>
     @@include('_footer.kit')
     <script src="/dist/js/script.min.js"></script>
-</body>
+  </body>
 </html>`,
     },
     {
@@ -51,7 +46,7 @@ const createFiles = (projectType, done) => {
 // Mixin do obsługi responsywności
 @mixin respond($breakpoint) {
   @if $breakpoint == "phone" {
-    @media only screen and (min_width: 37.5em) {
+    @media only screen and (min-width: 37.5em) {
       @content;
     }
   } @else if $breakpoint == "tab_port" {
@@ -71,7 +66,7 @@ const createFiles = (projectType, done) => {
     },
     {
       path: "src/sass/base/_base.scss",
-      content: `@import "../abstracts/mixins";
+      content: `@use "../abstracts/mixins";
 
 *,
 *::before,
@@ -84,19 +79,19 @@ const createFiles = (projectType, done) => {
 html {
   font-size: 62.5%;
 
-  @include respond("phone") {
+  @include mixins.respond("phone") {
     font-size: 75%;
   }
 
-  @include respond("tab_port") {
+  @include mixins.respond("tab_port") {
     font-size: 100%;
   }
 
-  @include respond("tab_land") {
+  @include mixins.respond("tab_land") {
     font-size: 125%;
   }
 
-  @include respond("big_desktop") {
+  @include mixins.respond("big_desktop") {
     font-size: 150%;
   }
 }
@@ -125,9 +120,9 @@ body {
     },
     {
       path: "src/sass/style.scss",
-      content: `@import "abstracts/mixins";
-@import "base/base";
-@import "base/utilities";`,
+      content: `@use "abstracts/mixins";
+@use "base/base";
+@use "base/utilities";`,
     },
     {
       path: "src/js/script.js",
@@ -200,7 +195,9 @@ Funkcja \`compressImages\` kompresuje obrazy za pomocą usługi TinyPNG. Upewnij
 dist/
 .env
 *.log
-*.zip`,
+*.zip
+backups/
+aktualizacja.txt`,
     }
   );
 
@@ -213,10 +210,7 @@ dist/
 import express from "express";
 import routs from "./routes/link.js";
 import db from "./data/database.js";
-import browserSync from "browser-sync";
-import { time } from "console";
 import dotenv from "dotenv";
-import net from "net";
 dotenv.config(); // Wczytaj zmienne środowiskowe z pliku .env
 
 const app = express();
@@ -237,40 +231,10 @@ app.use(function (error, req, res, next) {
   res.status(500).render("500");
 });
 
-async function findFreePort(startPort = 3000, maxPort = 3100) {
-  for (let port = startPort; port <= maxPort; port++) {
-    const isFree = await new Promise((resolve) => {
-      const tester = net
-        .createServer()
-        .once("error", () => resolve(false))
-        .once("listening", () => {
-          tester.close();
-          resolve(true);
-        })
-        .listen(port);
-    });
-    if (isFree) return port;
-  }
-  throw new Error("Brak wolnych portów w zakresie!");
-}
-
-(async () => {
-  const port = await findFreePort(3000, 3100);
-  const browserSyncPort = port + 1;
-
-  app.listen(port, function () {
-    console.log(\`Server is running on port \${port}\`);
-
-    const bs = browserSync.create();
-    bs.init({
-      proxy: \`http://localhost:\${port}\`,
-      files: ["views/**/*.ejs", "dist/css/*.css", "dist/js/*.js"],
-      port: browserSyncPort,
-      open: true,
-      notify: true,
-    });
-  });
-})();
+const port = Number(process.env.PORT) || 3005;
+app.listen(port, function () {
+  console.log('Server is running on port ' + port);
+});
 `,
       },
 
@@ -326,6 +290,22 @@ export default {
         path: "views/500.ejs",
         content: `<h1>Błąd serwera</h1>
 <p>Przepraszamy, wystąpił błąd serwera.</p>`,
+      },
+      {
+        path: "views/index.ejs",
+        content: `<!DOCTYPE html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Start</title>
+    <link rel="stylesheet" href="/dist/css/style.min.css" />
+  </head>
+  <body>
+    <h1>Hello EJS!</h1>
+    <script src="/dist/js/script.min.js"></script>
+  </body>
+</html>`,
       }
     );
   }
