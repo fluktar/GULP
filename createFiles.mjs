@@ -135,7 +135,7 @@ html {
 
 body {
   box-sizing: border-box;
-}`,
+}
 
 // Uniwersalny kontener
 .container {
@@ -149,6 +149,7 @@ h1 {
   @include mixins.fluid-type(2.4rem, 4rem, phone, tab_land);
   line-height: 1.15;
 }
+`,
     },
     {
       path: "src/sass/base/_utilities.scss",
@@ -169,8 +170,8 @@ h1 {
 }`,
     },
     {
-  path: "src/sass/style.scss",
-  content: `@use "abstracts/variables";
+      path: "src/sass/style.scss",
+      content: `@use "abstracts/variables";
 @use "abstracts/mixins";
 @use "base/base";
 @use "base/utilities";`,
